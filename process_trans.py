@@ -1,4 +1,8 @@
-data_root = '/opt/shared-data/kkbox-churn-prediction-challenge/'
+import pandas as pd
+import numpy as np
+
+#data_root = '/opt/shared-data/kkbox-churn-prediction-challenge/'
+data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 
 df_trans = pd.read_csv(data_root+'transactions.csv')
 df_trans = df_trans.append(pd.read_csv(data_root+'transactions_v2.csv'))
