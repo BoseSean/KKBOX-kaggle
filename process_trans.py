@@ -48,6 +48,6 @@ y1['amount_paid_perday'] = y1['total_amount_paid'] / y1['transaction_span']
 
 
 for m in y1.columns:
-    df_trans[m].fillna(method='ffill', inplace=True)
+    y1[m].fillna(method='ffill', inplace=True)
 
 y1.to_csv('transac_processed.csv')
