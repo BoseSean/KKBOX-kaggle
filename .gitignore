@@ -1,4 +1,6 @@
-model.txt 
+model.txt
+xgb_model.model
+
 # General
 .DS_Store
 .AppleDouble
