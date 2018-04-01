@@ -39,6 +39,7 @@ y1.columns = y1.columns.droplevel(0)
 y1.reset_index(inplace = True)
 y1['difference_in_price_paid'] = y1['total_list_price'] - y1['total_amount_paid']
 y1['amount_paid_perday'] = y1['total_amount_paid'] / y1['transaction_span']
+y1['is_discount'] = y1.difference_in_price_paid.apply(lambda x: 1 if x > 0 else 0)
 
 for m in df_trans.columns:
     df_trans[m].fillna(method='ffill', inplace=True)

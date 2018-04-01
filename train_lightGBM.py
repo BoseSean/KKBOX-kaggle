@@ -54,6 +54,7 @@ df_train['trans_count'] = df_train['trans_count'].astype(np.int16)
 df_train['total_amount_paid'] = df_train['total_amount_paid'].astype(np.int16)
 df_train['difference_in_price_paid'] = df_train['difference_in_price_paid'].astype(np.int16)
 df_train['amount_paid_perday'] = df_train['amount_paid_perday'].astype(np.float32)
+df_train['is_discount'] = df_train['is_discount'].astype('category')
 
 df_train['payment_method_id'] = df_train['payment_method_id'].astype(np.int16)
 df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16)
