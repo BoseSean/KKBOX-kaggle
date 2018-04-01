@@ -30,9 +30,6 @@ df_trans['actual_amount_paid'] = df_trans['actual_amount_paid'].astype(np.int16)
 df_trans['is_auto_renew'] = df_trans['is_auto_renew'].astype(np.int8)
 df_trans['is_cancel'] = df_trans['is_cancel'].astype(np.int8)
 
-df_trans['discount'] = df_trans['plan_list_price'] - df_trans['actual_amount_paid']
-df_trans['is_discount'] = df_trans.discount.apply(lambda x: 1 if x > 0 else 0)
-
 df_trans = df_trans.drop('transaction_date', 1)
 df_trans = df_trans.drop('membership_expire_date', 1)
 
@@ -50,7 +47,7 @@ y1['difference_in_price_paid'] = y1['total_list_price'] - y1['total_amount_paid'
 y1['amount_paid_perday'] = y1['total_amount_paid'] / y1['transaction_span']
 
 
-for m in df_trans.columns:
+for m in y1.columns:
     df_trans[m].fillna(method='ffill', inplace=True)
 
 y1.to_csv('transac_processed.csv')
