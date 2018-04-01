@@ -20,6 +20,7 @@ members  = pd.read_csv(data_root+'members_v3.csv')
 num_mean = pd.read_csv(data_root+'num_mean.csv')
 transaction = pd.read_csv(data_root+'transac_processed.csv')
 transaction.drop('idx',1)
+transaction_given = pd.read_csv(data_root+'transac_given_processed.csv')
 # test = pd.read_csv(data_root+'sample_submission_zero.csv')
 
 
@@ -30,6 +31,7 @@ print('Merging data ...')
 df_train = train.merge(members, how='left', on='msno')
 df_train = df_train.merge(num_mean, how='left', on='msno')
 df_train = df_train.merge(transaction, how='left', on='msno')
+df_train = df_train.merge(transaction_given, how='left', on='msno')
 
 print('Converting data type ...')
 df_train["is_churn"] = df_train["is_churn"].astype('category')
@@ -68,6 +70,12 @@ df_train['sum(num_985)']  = df_train['sum(num_985)'].astype(np.float32)
 df_train['sum(num_100)']  = df_train['sum(num_100)'].astype(np.float32)
 df_train['sum(num_unq)']  = df_train['sum(num_unq)'].astype(np.float32)
 df_train['sum(total_secs)']  = df_train['sum(total_secs)'].astype(np.float32)
+df_train['payment_method_id'] = df_train['payment_method_id'].astype(np.int16)
+df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16)
+df_train['plan_list_price'] = df_train['plan_list_price'].astype(np.int16)
+df_train['actual_amount_paid'] = df_train['actual_amount_paid'].astype(np.int16)
+df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16)
+
 
 print(df_train.dtypes)
 # df_train.fillna(-1)
@@ -79,7 +87,7 @@ print(features)
 
 
 print('Split data ...')
-x1, x2, y1, y2 = model_selection.train_test_split(df_train[features], 
+x1, x2, y1, y2 = model_selection.train_test_split(df_train[features],
     df_train['is_churn'], test_size=0.2, random_state=0)
 
 # lgb
@@ -107,12 +115,10 @@ lgb_params = {
         'metric': 'binary_logloss'
     }
 
-model = lgb.train(lgb_params, train_set=d_train, num_boost_round=240, 
-    valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100) 
-    
+model = lgb.train(lgb_params, train_set=d_train, num_boost_round=240,
+    valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100)
+
 print('Saving ...')
 model.save_model('model.txt')
 
 # print(df_train)
-
-
