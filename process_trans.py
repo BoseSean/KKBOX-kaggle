@@ -30,7 +30,7 @@ df_trans['actual_amount_paid'] = df_trans['actual_amount_paid'].astype(np.int16)
 df_trans['is_auto_renew'] = df_trans['is_auto_renew'].astype(np.int8)
 df_trans['is_cancel'] = df_trans['is_cancel'].astype(np.int8)
 
-df_trans['discount'] = df_trans['plan_list_price'] - df_transactions['actual_amount_paid']
+df_trans['discount'] = df_trans['plan_list_price'] - df_trans['actual_amount_paid']
 df_trans['is_discount'] = df_trans.discount.apply(lambda x: 1 if x > 0 else 0)
 
 df_trans = df_trans.drop('transaction_date', 1)
