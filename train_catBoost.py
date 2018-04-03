@@ -66,7 +66,7 @@ x_train, x_validation, y_train, y_validation = model_selection.train_test_split(
 x_test = df_test
 
 model = CatBoostClassifier(
-    #TODO: Trian our own parameters?
+    #TODO: Train our own parameters?
     iterations = 200,
     learning_rate = 0.12,
     depth = 7,
@@ -96,6 +96,6 @@ model.save_model('CatBoost_model')
 
 submission = pd.DataFrame()
 submission['msno'] = df_test['msno']
-#TODO: is it correct? need to link features to msno?
+#TODO: Need to link features to msno.
 submission['is_churn'] = model.predict(df_train[features])
 submission.to_csv('submission.csv',index=False)
