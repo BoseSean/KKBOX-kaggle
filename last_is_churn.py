@@ -46,6 +46,9 @@ result.to_csv('last_is_churns.csv'.format(target), index=False)
 def calc_churn(t_dates, e_dates, msno):
     churns = []
     for i, e_date in enumerate(e_dates):
+        if int(e_date)/100>=201703:# if expiration data is 201703 onwards, treat as no churn
+            churns.insert(0,0)
+            continue
         expired_date = datetime.datetime.strptime(str(e_date), "%Y%m%d")
         churn = 1
         for t_date in enumerate(t_dates):
@@ -54,9 +57,11 @@ def calc_churn(t_dates, e_dates, msno):
             if (0 <= dif_d < 30): # if some trans resubscribe
                 churn = 0
         churns.insert(0,churn)
+
     if len(churns)>0:
         churn_rate=(sum(churns) / len(churns))
     churn_count=sum(churns)
+
     while len(churns)<=5:
         churns.append(0)
     df = {'msno':[msno],'last_1_is_churn':[churns[0]],'last_2_is_churn':[churns[1]],'last_3_is_churn':[churns[2]],'last_4_is_churn':[churns[3]],'last_5_is_churn': [churns[4]],'churn_rate':[churn_rate],'churn_count':[churn_count]}
