@@ -94,9 +94,13 @@ model.fit(df_train[features], df_train['is_churn'])
 print('Saving ...')
 model.save_model('CatBoost_model')
 
-# submission = pd.DataFrame()
-# submission['msno'] = df_test['msno']
-# #TODO: Need to link features to msno.
-# #maybe, merge df_train and sample_submisson on msno they drop other columns?
-# submission['is_churn'] = model.predict(df_train[features])
-# submission.to_csv('submission.csv',index=False)
+submission = pd.DataFrame()
+submission['msno'] = df_test['msno']
+#TODO: Need to link features to msno.
+#maybe, merge df_train and sample_submisson on msno they drop other columns?
+submission = submission.merge(df_train, how='left', on='msno')
+submission.drop('is_churn',1)
+submission['is_churn'] = model.predict(submission[features])
+for m in features:
+    submission.drop(m,1)
+submission.to_csv('submission.csv',index=False)
