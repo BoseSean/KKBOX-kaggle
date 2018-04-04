@@ -20,7 +20,7 @@ transactions = transaction.drop(columns=['payment_method_id', 'payment_plan_days
                                          'plan_list_price', 'actual_amount_paid', 'is_auto_renew', 'is_cancel'])
 transactions = transactions.sort_values(
     ['msno', 'transaction_date'])
-result=dp.DataFrame(columns=['msno','last_1_is_churn','last_2_is_churn','last_3_is_churn','last_4_is_churn','last_5_is_churn','churn_rate','churn_count')
+result=dp.DataFrame(columns=['msno','last_1_is_churn','last_2_is_churn','last_3_is_churn','last_4_is_churn','last_5_is_churn','churn_rate','churn_count'])
 
 transaction_dates = []
 membership_expire_dates = []
@@ -59,6 +59,6 @@ def calc_churn(t_dates, e_dates, msno):
     churn_count=sum(churns)
     while len(churns)<=5:
         churns.append(0)
-    df = {'msno':[msno],'last_1_is_churn':[churns[0]],'last_2_is_churn':[churns[1]],'last_3_is_churn':[churns[2]],'last_4_is_churn':[churns[3]],'last_5_is_churn': [churns[4]]',churn_rate':[churn_rate],'churn_count':[churn_count]}
+    df = {'msno':[msno],'last_1_is_churn':[churns[0]],'last_2_is_churn':[churns[1]],'last_3_is_churn':[churns[2]],'last_4_is_churn':[churns[3]],'last_5_is_churn': [churns[4]],'churn_rate':[churn_rate],'churn_count':[churn_count]}
     #df = pd.DataFrame(data=np.array([[1, 2, 3]]), columns=['msno','last_1_is_churn','last_2_is_churn','last_3_is_churn','last_4_is_churn','last_5_is_churn'])
     result.append(pd.DataFrame(data=df))
