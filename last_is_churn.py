@@ -12,10 +12,10 @@ import pandas as pd
 import datetime
 from tqdm import tqdm
 
-transactions = pd.read_csv('trans_test.csv').reset_index(drop=True)
-#transactions_v1 = pd.read_csv('transactions.csv')
-#transactions_v2 = pd.read_csv('transactions_v2.csv')
-#transactions = transactions_v1.append(transactions_v2).reset_index(drop=True)
+# transactions = pd.read_csv('trans_test.csv').reset_index(drop=True)
+transactions_v1 = pd.read_csv('transactions.csv')
+transactions_v2 = pd.read_csv('transactions_v2.csv')
+transactions = transactions_v1.append(transactions_v2).reset_index(drop=True)
 
 transactions = transactions.drop(columns=['payment_method_id', 'payment_plan_days',
                                           'plan_list_price', 'actual_amount_paid', 'is_auto_renew', 'is_cancel'])
@@ -34,13 +34,13 @@ total_rows = len(transactions['msno'])
 def calc_churn(t_dates, e_dates, msno, result):
     churns = []
     for i, e_date in enumerate(e_dates):
-        if int(e_date) / 100 >= 201703:  # if expiration data is 201703 onwards, treat as no churn
+        if int(e_dates[i]) / 100 >= 201708:  # if expiration data is 201703 onwards, treat as no churn
             churns.insert(0, 0)
             continue
-        expired_date = datetime.datetime.strptime(str(e_date), "%Y%m%d")
+        expired_date = datetime.datetime.strptime(str(e_dates[i]), "%Y%m%d")
         churn = 1
-        for t_date in enumerate(t_dates):
-            trans_date = datetime.datetime.strptime(str(t_date), "%Y%m%d")
+        for j, t_date in enumerate(t_dates):
+            trans_date = datetime.datetime.strptime(str(t_dates[j]), "%Y%m%d")
             dif_d = (trans_date - expired_date).days
             if (0 <= dif_d < 30):  # if some trans resubscribe
                 churn = 0
