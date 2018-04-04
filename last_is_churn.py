@@ -20,7 +20,7 @@ transactions = transaction.drop(columns=['payment_method_id', 'payment_plan_days
                                          'plan_list_price', 'actual_amount_paid', 'is_auto_renew', 'is_cancel'])
 transactions = transactions.sort_values(
     ['msno', 'transaction_date'])
-result=dp.DataFrame(columns=['msno','last_1_is_churn','last_2_is_churn','last_3_is_churn','last_4_is_churn','last_5_is_churn','churn_rate','churn_count'])
+result=pd.DataFrame(columns=['msno','last_1_is_churn','last_2_is_churn','last_3_is_churn','last_4_is_churn','last_5_is_churn','churn_rate','churn_count'])
 
 transaction_dates = []
 membership_expire_dates = []
