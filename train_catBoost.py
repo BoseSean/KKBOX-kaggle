@@ -1,15 +1,8 @@
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-
-# Input data files are available in the "../input/" directory.
-# For example, running this (by clicking run or pressing Shift+Enter) will list the files in the input directory
-
-
-# Any results you write to the current directory are saved as output.
-import lightgbm as lgb
+import numpy as np
+import pandas as pd
+import catboost
 import gc
 from sklearn import *
-
 
 print('Loading data ...')
 
@@ -21,12 +14,8 @@ num_mean = pd.read_csv(data_root+'num_mean.csv')
 transaction = pd.read_csv(data_root+'transac_processed.csv')
 transaction.drop('idx',1)
 transaction_given = pd.read_csv(data_root+'transac_given_processed.csv')
-# test = pd.read_csv(data_root+'sample_submission_zero.csv')
+df_test = pd.read_csv(data_root+'sample_submission_v2.csv')
 
-
-# for c, dtype in zip(info.columns, info.dtypes):
-#     if dtype == np.float64:
-#         info[c] = info[c].astype(np.float32)
 print('Merging data ...')
 df_train = train.merge(members, how='left', on='msno')
 df_train = df_train.merge(num_mean, how='left', on='msno')
@@ -39,6 +28,7 @@ df_train["city"] = df_train["city"].astype('category')
 df_train["gender"] = df_train["gender"].astype('category')
 df_train["registered_via"] = df_train["registered_via"].astype('category')
 df_train["registration_init_time"] = df_train["registration_init_time"].astype('category')
+
 
 df_train['city'].fillna(method='ffill', inplace=True)
 df_train['bd'].fillna(method='ffill', inplace=True)
@@ -55,21 +45,6 @@ df_train['total_amount_paid'] = df_train['total_amount_paid'].astype(np.int16)
 df_train['difference_in_price_paid'] = df_train['difference_in_price_paid'].astype(np.int16)
 df_train['amount_paid_perday'] = df_train['amount_paid_perday'].astype(np.float32)
 
-
-df_train['avg(num_25)']  = df_train['avg(num_25)'].astype(np.float32)
-df_train['avg(num_50)']  = df_train['avg(num_50)'].astype(np.float32)
-df_train['avg(num_75)']  = df_train['avg(num_75)'].astype(np.float32)
-df_train['avg(num_985)']  = df_train['avg(num_985)'].astype(np.float32)
-df_train['avg(num_100)']  = df_train['avg(num_100)'].astype(np.float32)
-df_train['avg(num_unq)']  = df_train['avg(num_unq)'].astype(np.float32)
-df_train['avg(total_secs)']  = df_train['avg(total_secs)'].astype(np.float32)
-df_train['sum(num_25)']  = df_train['sum(num_25)'].astype(np.float32)
-df_train['sum(num_50)']  = df_train['sum(num_50)'].astype(np.float32)
-df_train['sum(num_75)']  = df_train['sum(num_75)'].astype(np.float32)
-df_train['sum(num_985)']  = df_train['sum(num_985)'].astype(np.float32)
-df_train['sum(num_100)']  = df_train['sum(num_100)'].astype(np.float32)
-df_train['sum(num_unq)']  = df_train['sum(num_unq)'].astype(np.float32)
-df_train['sum(total_secs)']  = df_train['sum(total_secs)'].astype(np.float32)
 df_train['payment_method_id'] = df_train['payment_method_id'].astype(np.int16)
 df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16)
 df_train['plan_list_price'] = df_train['plan_list_price'].astype(np.int16)
@@ -78,7 +53,6 @@ df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16)
 df_train['discount'] = df_train['discount'].astype(np.int16)
 df_train['is_discount'] = df_train['is_discount'].astype('category')
 
-
 print(df_train.dtypes)
 # df_train.fillna(-1)
 
@@ -86,41 +60,47 @@ features = [c for c in df_train.columns if c not in ['is_churn','msno']]
 print('Using features')
 print(features)
 
-
-
 print('Split data ...')
-x1, x2, y1, y2 = model_selection.train_test_split(df_train[features],
+x_train, x_validation, y_train, y_validation = model_selection.train_test_split(df_train[features],
     df_train['is_churn'], test_size=0.2, random_state=0)
+x_test = df_test
 
-# lgb
-d_train = lgb.Dataset(x1, label=y1)
-d_valid = lgb.Dataset(x2, label=y2)
-watchlist = [d_train, d_valid]
+model = CatBoostClassifier(
+    #TODO: Train our own parameters?
+    iterations = 200,
+    learning_rate = 0.12,
+    depth = 7,
+    12_leaf_reg = 3,
+    loss_function = 'Logloss',
+    eval_matric = 'Logloss',
+    randon_seed = 0
+)
 
-# lgb_params = {
-#     'learning_rate': 0.05,
-#     'application': 'binary',
-#     'max_depth': 5,
-#     'num_leaves': 512,
-#     'verbosity': -1,
-#     'metric': 'binary_logloss'
-# }
+categorical_features_indices = np.where(df_train[features].dtypes != np.float)[0]
 
-print('Training ...')
-n_round=500
-lgb_params = {
-        'learning_rate': 0.05,
-        'application': 'binary',
-        'max_depth': 7,
-        'num_leaves': 256,
-        'verbosity': -1,
-        'metric': 'binary_logloss'
-    }
+model.fit(
+    x_train, y_train,
+    cat_features = categorical_features_indices,
+    eval_set=(x_validation,y_validation)
+)
 
-model = lgb.train(lgb_params, train_set=d_train, num_boost_round=240,
-    valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100)
+#TODO: Parameter tuning if possible. iterations,learning_rate,depth,12_leaf_reg
 
+cat_valid = model.predict_proba(x_validation)[:,1]
+print('Log loss: {}'.format(log_loss(y_validation,cat_valid)))
+
+#retrain model on all data
+model.fit(df_train[features], df_train['is_churn'])
 print('Saving ...')
-model.save_model('model.txt')
+model.save_model('CatBoost_model')
 
-# print(df_train)
+submission = pd.DataFrame()
+submission['msno'] = df_test['msno']
+#TODO: Need to link features to msno.
+#maybe, merge df_train and sample_submisson on msno they drop other columns?
+submission = submission.merge(df_train, how='left', on='msno')
+submission.drop('is_churn',1)
+submission['is_churn'] = model.predict(submission[features])
+for m in features:
+    submission.drop(m,1)
+submission.to_csv('submission.csv',index=False)
