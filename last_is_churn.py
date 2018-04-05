@@ -34,7 +34,7 @@ total_rows = len(transactions['msno'])
 def calc_churn(t_dates, e_dates, msno, result):
     churns = []
     for i, e_date in enumerate(e_dates):
-        if int(e_dates[i]) / 100 >= 201708:  # if expiration data is 201703 onwards, treat as no churn
+        if int(e_dates[i]) / 100 >= 201703:  # if expiration data is 201703 onwards, treat as no churn
             churns.insert(0, 0)
             continue
         expired_date = datetime.datetime.strptime(str(e_dates[i]), "%Y%m%d")
