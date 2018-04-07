@@ -15,9 +15,10 @@ print('Loading data ...')
 #data_root = '/opt/shared-data/kkbox-churn-prediction-challenge/'
 data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 train = pd.read_csv( data_root+'train.csv')
+train = train.merge(pd.read_csv( data_root+'train_v2.csv'))
 members  = pd.read_csv(data_root+'members_v3.csv')
 num_mean = pd.read_csv(data_root+'num_mean.csv')
-num_mean = pd.read_csv(data_root+'num_mean_v2.csv')
+num_mean = num_mean.append(pd.read_csv(data_root+'num_mean_2.csv'))
 
 transaction = pd.read_csv(data_root+'transac_processed.csv')
 transaction.drop('idx',1)
@@ -35,6 +36,9 @@ df_train = train.merge(members, how='left', on='msno')
 df_train = df_train.merge(num_mean, how='left', on='msno')
 df_train = df_train.merge(transaction, how='left', on='msno')
 
+df_test = test.merge(members, how='left', on='msno')
+df_test = df_test.merge(num_mean, how='left', on='msno')
+df_test = df_test.merge(transaction, how='left', on='msno')
 print('Converting data type ...')
 # df_train["is_churn"] = df_train["is_churn"].astype('category')
 # df_train["city"] = df_train["city"].astype('category')
@@ -61,6 +65,18 @@ df_train['amount_paid_perday'] = df_train['amount_paid_perday'].astype(np.float3
 
 df_train.corr()
 print(df_train.dtypes)
+
+df_test['gender'] = members['gender'].map(gender)
+df_test['total_list_price'] = df_test['total_list_price'].astype(np.int16)
+df_test['transaction_span'] = df_test['transaction_span'].astype(np.int16)
+df_test['is_auto_renew'] = df_test['is_auto_renew'].astype(np.int16)
+df_test['is_cancel_sum'] = df_test['is_cancel_sum'].astype(np.int16)
+df_test['trans_count'] = df_test['trans_count'].astype(np.int16)
+df_test['total_amount_paid'] = df_test['total_amount_paid'].astype(np.int16)
+df_test['difference_in_price_paid'] = df_test['difference_in_price_paid'].astype(np.int16)
+df_test['amount_paid_perday'] = df_test['amount_paid_perday'].astype(np.float32)
+
+print(df_test.dtypes)
 # df_train.fillna(-1)
 
 features = [c for c in df_train.columns if c not in ['is_churn','msno']]
@@ -90,6 +106,11 @@ model = xgb.train(params, xgb.DMatrix(x1, y1), 200,  watchlist,
 
 print('Saving ...')
 model.save_model('xgb_model.model')
+
+print('Predicting ...')
+prediction = model.predict(df_test[features])
+prediction_df = pd.DataFrame(OrderedDict([ ("msno", test["msno"]),("is_churn", prediction) ]))
+prediction_df.to_csv("xgboost_prediction.csv",index=False)
 # xgb_pred = model.predict(xgb.DMatrix(test[cols]), ntree_limit=model.best_ntree_limit)
 #xgb_pred = model.predict(xgb.DMatrix(test[cols]), ntree_limit=ntree_limit[i])
 # xgb_valid = model.predict(xgb.DMatrix(x2))

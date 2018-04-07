@@ -1,5 +1,7 @@
+*.csv
 model.txt
 xgb_model.model
+*.model
 
 # General
 .DS_Store

@@ -12,9 +12,10 @@ import pandas as pd
 import datetime
 from tqdm import tqdm
 
+data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 # transactions = pd.read_csv('trans_test.csv').reset_index(drop=True)
-transactions_v1 = pd.read_csv('transactions.csv')
-transactions_v2 = pd.read_csv('transactions_v2.csv')
+transactions_v1 = pd.read_csv(data_root+'transactions.csv')
+transactions_v2 = pd.read_csv(data_root+'transactions_v2.csv')
 transactions = transactions_v1.append(transactions_v2).reset_index(drop=True)
 
 transactions = transactions.drop(columns=['payment_method_id', 'payment_plan_days',
@@ -26,7 +27,7 @@ result = pd.DataFrame()
 
 
 transaction_dates = []
-membership_expire_dates = []
+membership_expire_dates = [] 
 prev_msno = ''
 total_rows = len(transactions['msno'])
 
