@@ -18,9 +18,22 @@ df_test = pd.read_csv(data_root+'sample_submission_v2.csv')
 
 print('Merging data ...')
 df_train = train.merge(members, how='left', on='msno')
+df_test = df_test.merge(members, how='left', on='msno')
+
 df_train = df_train.merge(num_mean, how='left', on='msno')
+df_test = df_test.merge(num_mean, how='left', on='msno')
+
 df_train = df_train.merge(transaction, how='left', on='msno')
+df_test = df_test.merge(transaction, how='left', on='msno')
+
 df_train = df_train.merge(transaction_given, how='left', on='msno')
+df_test = df_train.merge(transaction_given, how='left', on='msno')
+
+del transaction, transaction_given, members, num_mean
+gc.collect()
+
+# Drop duplicates first
+df_test = df_test.drop_duplicates('msno')
 
 print('Converting data type ...')
 df_train["is_churn"] = df_train["is_churn"].astype('category')
@@ -76,7 +89,7 @@ model = CatBoostClassifier(
     randon_seed = 0
 )
 
-categorical_features_indices = np.where(df_train[features].dtypes != np.float)[0]
+categorical_features_indices = np.where(df_train[features].dtypes != (np.float32 or np.int16))[0]
 
 model.fit(
     x_train, y_train,
@@ -90,17 +103,15 @@ cat_valid = model.predict_proba(x_validation)[:,1]
 print('Log loss: {}'.format(log_loss(y_validation,cat_valid)))
 
 #retrain model on all data
-model.fit(df_train[features], df_train['is_churn'])
+model.fit(
+    df_train[features], df_train['is_churn'],
+    cat_features = categorical_features_indices,
+    eval_set=(x_validation,y_validation)
+    )
 print('Saving ...')
 model.save_model('CatBoost_model')
 
-submission = pd.DataFrame()
-submission['msno'] = df_test['msno']
-#TODO: Need to link features to msno.
-#maybe, merge df_train and sample_submisson on msno they drop other columns?
-submission = submission.merge(df_train, how='left', on='msno')
-submission.drop('is_churn',1)
-submission['is_churn'] = model.predict(submission[features])
-for m in features:
-    submission.drop(m,1)
-submission.to_csv('submission.csv',index=False)
+
+df_test['is_churn'] = model.predict(df_test[features])
+df_test = df_test[['msno','is_churn']]
+df_test.to_csv('catBoost_submission.csv',index=False)
