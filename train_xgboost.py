@@ -53,6 +53,14 @@ df_train['total_amount_paid'] = df_train['total_amount_paid'].astype(np.int16)
 df_train['difference_in_price_paid'] = df_train['difference_in_price_paid'].astype(np.int16)
 df_train['amount_paid_perday'] = df_train['amount_paid_perday'].astype(np.float32)
 
+df_train['payment_method_id'] = df_train['payment_method_id'].astype(np.int16)
+df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16)
+df_train['plan_list_price'] = df_train['plan_list_price'].astype(np.int16)
+df_train['actual_amount_paid'] = df_train['actual_amount_paid'].astype(np.int16)
+df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16)
+df_train['discount'] = df_train['discount'].astype(np.int16)
+df_train['is_discount'] = df_train['is_discount'].astype('category')
+
 print(df_train.dtypes)
 # df_train.fillna(-1)
 
@@ -63,7 +71,7 @@ print(features)
 
 
 print('Split data ...')
-x1, x2, y1, y2 = model_selection.train_test_split(df_train[features], 
+x1, x2, y1, y2 = model_selection.train_test_split(df_train[features],
     df_train['is_churn'], test_size=0.2, random_state=0)
 
 # lgb
@@ -90,12 +98,10 @@ n_round=500
 #         'metric': 'binary_logloss'
 #     }
 
-model = lgb.train(lgb_params, train_set=d_train, num_boost_round=240, 
-    valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100) 
-    
+model = lgb.train(lgb_params, train_set=d_train, num_boost_round=240,
+    valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100)
+
 print('Saving ...')
 model.save_model('model.txt')
 
 # print(df_train)
-
-
