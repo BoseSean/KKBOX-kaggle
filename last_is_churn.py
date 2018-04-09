@@ -13,13 +13,12 @@ from tqdm import tqdm
 
 data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 # transactions = pd.read_csv('trans_test.csv').reset_index(drop=True)
-<<<<<<< HEAD
 transactions_v1 = pd.read_csv(data_root+'transactions.csv')
 transactions_v2 = pd.read_csv(data_root+'transactions_v2.csv')
+
 transactions = transactions_v1.append(transactions_v2).reset_index(drop=True)
-=======
 transactions = pd.read_csv('sorted_trans_for_last.csv')
->>>>>>> 818a2a6607c2cd140d052bce6d5e4897b9c2c5c5
+
 
 result = pd.DataFrame()
 transaction_dates = []
