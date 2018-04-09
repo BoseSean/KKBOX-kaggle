@@ -111,7 +111,7 @@ df_test['is_discount'] = df_test['is_discount'].astype('category')
 # print('Saving ...')
 # model.save_model('CatBoost_model')
 
-model = catboost.load_model(model_path)
+model = catboost.load_model(data_root+'CatBoost.cbm')
 
 df_test['is_churn'] = model.predict(df_test[features])
 df_test = df_test[['msno','is_churn']]

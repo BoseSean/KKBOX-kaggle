@@ -108,7 +108,7 @@ cat_valid = model.predict_proba(x_validation)[:,1]
 print('Log loss: {}'.format(log_loss(y_validation,cat_valid)))
 
 print('Saving ...')
-model.save_model('CatBoost_model')
+model.save_model("CatBoost_model",format="cbm")
 
 #df_test['is_churn'] = model.predict(df_test[features])
 #df_test = df_test[['msno','is_churn']]
