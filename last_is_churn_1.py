@@ -21,31 +21,18 @@ prev_msno = ''
 total_rows = len(transactions['msno'])
 
 def calc_churn(t_dates, e_dates, msno):
-    churns = []
-    for i, e_date in enumerate(e_dates):
-        if int(e_dates[i]) / 100 >= 201703:  # if expiration data is 201703 onwards, treat as no churn
-            churns.insert(0, 0)
-            continue
-        expired_date = datetime.datetime.strptime(str(e_dates[i]), "%Y%m%d")
-        churn = 1
-        if (i < len(t_dates) - 1):
-            trans_date = datetime.datetime.strptime(str(t_dates[i + 1]), "%Y%m%d")
-            dif_d = (trans_date - expired_date).days
-            if (0 <= dif_d < 30):  # if some trans resubscribe
-                churn = 0
-        churns.insert(0, churn)
 
-    churn_rate = 0
-    if len(churns) > 0:
-        churn_rate = (sum(churns) / len(churns))
-    churn_count = sum(churns)
+    churn = 1
+    if (len(t_dates) >1):
+        if int(e_dates[-2]) / 100 >= 201703:  # if expiration data is 201703 onwards, treat as no churn
+            churn = 0
+        expired_date = datetime.datetime.strptime(str(e_dates[-2]), "%Y%m%d")
+        trans_date = datetime.datetime.strptime(str(t_dates[-1]), "%Y%m%d")
+        dif_d = (trans_date - expired_date).days
+        if (0 <= dif_d < 30):  # if some trans resubscribe
+            churn = 0
 
-    while len(churns) < 5:
-        churns.append(0)
-
-    df = {'msno': [msno], 'last_1_is_churn': [churns[0]], 'last_2_is_churn': [churns[1]], 'last_3_is_churn': [
-        churns[2]], 'last_4_is_churn': [churns[3]], 'last_5_is_churn': [churns[4]], 'churn_rate': [churn_rate],
-          'churn_count': [churn_count]}
+    df = {'msno': [msno], 'last_1_is_churn': [churn]}
     # df = pd.DataFrame(data=np.array([[1, 2, 3]]), columns=['msno','last_1_is_churn','last_2_is_churn','last_3_is_churn','last_4_is_churn','last_5_is_churn'])
     return df
 
@@ -65,7 +52,5 @@ for i, row in tqdm(transactions.iterrows(), total=total_rows):
     membership_expire_dates.append(membership_expire_date)
     prev_msno = msno
 
-result = result[['msno', 'last_1_is_churn',
-                 'last_2_is_churn', 'last_3_is_churn', 'last_4_is_churn', 'last_5_is_churn', 'churn_rate',
-                 'churn_count']]
+result = result[['msno', 'last_1_is_churn']]
 result.to_csv('last_is_churns.csv', index=False)
