@@ -11,21 +11,20 @@ import gc
 from sklearn import *
 from collections import OrderedDict
 
-model = xgb.Booster()
-model.load_model('xgb_model.model')
-
-
 print("loading...")
+
+
+
 data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 members  = pd.read_csv(data_root+'members_v3.csv')
-members.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+# members.drop_duplicates(subset=['msno'], keep='first', inplace=True)
 
 num_mean = pd.read_csv(data_root+'num_mean.csv')
 num_mean = num_mean.append(pd.read_csv(data_root+'num_mean_2.csv'))
-num_mean.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+# num_mean.drop_duplicates(subset=['msno'], keep='first', inplace=True)
 
 transaction = pd.read_csv(data_root+'transac_processed.csv')
-transaction.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+# transaction.drop_duplicates(subset=['msno'], keep='first', inplace=True)
 transaction.drop('idx',1)
 
 test = pd.read_csv(data_root+'sample_submission_v2.csv')
@@ -39,7 +38,8 @@ df_test = df_test.merge(num_mean, how='left', on='msno')
 print(df_test.shape)
 df_test = df_test.merge(transaction, how='left', on='msno')
 print(df_test.shape)
-
+df_test.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+print(df_test.shape)
 
 gender = {'male':1, 'female':2}
 
@@ -59,12 +59,21 @@ print(df_test.shape)
 features = [c for c in df_test.columns if c not in ['is_churn','msno']]
 
 print("predicting...")
+prediction = 0
+fold = 5
+for i in range(0,fold):
+    model = xgb.Booster()
+    model.load_model('xgb_model/xgb_model_'+str(i)+'.model')
+    if i==0:
+        prediction = model.predict(xgb.DMatrix(df_test[features]))
+    else:
+        prediction += model.predict(xgb.DMatrix(df_test[features]))
+    print(prediction.shape)
 
-prediction = model.predict(xgb.DMatrix(df_test[features]))
-print(prediction.shape)
+prediction /= fold
 
 test['is_churn'] = prediction
-test[['msno', 'is_churn']].to_csv("xgboost_prediction.csv", index=False)
+test[['msno', 'is_churn']].to_csv("xgboost_prediction1.csv", index=False)
 # # prediction_df = pd.DataFrame(OrderedDict([ ("msno", test["msno"]),("is_churn", prediction) ]))
 # # prediction_df.to_csv("xgboost_prediction.csv",index=False)
 907472

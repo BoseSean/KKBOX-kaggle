@@ -17,7 +17,12 @@ print('Loading data ...')
 data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 train = pd.read_csv( data_root+'train.csv')
 members  = pd.read_csv(data_root+'members_v3.csv')
+members.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+
 num_mean = pd.read_csv(data_root+'num_mean.csv')
+num_mean = num_mean.append(pd.read_csv(data_root+'num_mean_2.csv'))
+num_mean.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+
 transaction = pd.read_csv(data_root+'transac_processed.csv')
 transaction.drop('idx',1)
 transaction_given = pd.read_csv(data_root+'transac_given_processed.csv')
@@ -75,8 +80,6 @@ df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16)
 df_train['plan_list_price'] = df_train['plan_list_price'].astype(np.int16)
 df_train['actual_amount_paid'] = df_train['actual_amount_paid'].astype(np.int16)
 df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16)
-df_train['discount'] = df_train['discount'].astype(np.int16)
-df_train['is_discount'] = df_train['is_discount'].astype('category')
 
 
 print(df_train.dtypes)
@@ -117,10 +120,14 @@ lgb_params = {
         'metric': 'binary_logloss'
     }
 
-model = lgb.train(lgb_params, train_set=d_train, num_boost_round=240,
+model1 = lgb.train(lgb_params, train_set=d_train, num_boost_round=240,
     valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100)
+model1.save_model('model1.txt')
+
+model = lgb.cv(lgb_params, train_set=d_train, num_boost_round=240,
+    valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100,  nfold=5)
 
 print('Saving ...')
-model.save_model('model.txt')
 
+model.save_model('model.txt')
 # print(df_train)

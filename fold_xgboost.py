@@ -16,11 +16,16 @@ print('Loading data ...')
 data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 train = pd.read_csv( data_root+'train.csv')
 train = train.merge(pd.read_csv( data_root+'train_v2.csv'))
+
 members  = pd.read_csv(data_root+'members_v3.csv')
+members.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+
 num_mean = pd.read_csv(data_root+'num_mean.csv')
 num_mean = num_mean.append(pd.read_csv(data_root+'num_mean_2.csv'))
+num_mean.drop_duplicates(subset=['msno'], keep='first', inplace=True)
 
 transaction = pd.read_csv(data_root+'transac_processed.csv')
+transaction.drop_duplicates(subset=['msno'], keep='first', inplace=True)
 transaction.drop('idx',1)
 
 test = pd.read_csv(data_root+'sample_submission_v2.csv')
@@ -75,8 +80,9 @@ df_test['trans_count'] = df_test['trans_count'].astype(np.int16)
 df_test['total_amount_paid'] = df_test['total_amount_paid'].astype(np.int16)
 df_test['difference_in_price_paid'] = df_test['difference_in_price_paid'].astype(np.int16)
 df_test['amount_paid_perday'] = df_test['amount_paid_perday'].astype(np.float32)
+
+df_test.corr()
 print(df_test.dtypes)
-# df_train.fillna(-1)
 
 features = [c for c in df_train.columns if c not in ['is_churn','msno']]
 print('Using features')
@@ -85,7 +91,8 @@ print(features)
 
 
 print('Split data ...')
-
+x1, x2, y1, y2 = model_selection.train_test_split(df_train[features], 
+    df_train['is_churn'], test_size=0.1, random_state=0)
 
 print('Training ...')
 
@@ -94,36 +101,26 @@ params = {
     'max_depth': 7,
     'objective': 'binary:logistic',
     'eval_metric': 'logloss',
-    'seed': 3227,
+    'seed': 3228,
     'silent': True,
     'tree_method': 'exact'
     }
+watchlist = [(xgb.DMatrix(x1, y1), 'train'), (xgb.DMatrix(x2, y2), 'valid')]
 
+prediction = 0
 fold = 5
 for i in range(0,fold):
-    params = {
-    'eta': 0.07,
-    'max_depth': 7,
-    'objective': 'binary:logistic',
-    'eval_metric': 'logloss',
-    'seed': 3227+i,
-    'silent': True,
-    'tree_method': 'exact'
-    }
-    x1, x2, y1, y2 = model_selection.train_test_split(df_train[features], 
-    df_train['is_churn'], test_size=0.2, random_state=i)
-    watchlist = [(xgb.DMatrix(x1, y1), 'train'), (xgb.DMatrix(x2, y2), 'valid')]
     model = xgb.train(params, xgb.DMatrix(x1, y1), 200,  watchlist, 
-        maximize=False, verbose_eval=100, early_stopping_rounds=10)
+    maximize=False, verbose_eval=100, early_stopping_rounds=10)
+    if(i == 0):
+        prediction = model.predict(df_test[features])
+    else:
+        prediction += model.predict(df_test[features])
 
-    print('Saving ...'+str(i))
-    model.save_model('xgb_model/xgb_model_'+str(i)+'.model')
+prediction /= fold
 
-# print('Predicting ...')
-# prediction = model.predict(df_test[features])
-# prediction_df = pd.DataFrame(OrderedDict([ ("msno", test["msno"]),("is_churn", prediction) ]))
-# prediction_df.to_csv("xgboost_prediction.csv",index=False)
-
+test['is_churn'] = prediction
+test[['msno', 'is_churn']].to_csv("xgboost_prediction_fold_5.csv", index=False)
 # xgb_pred = model.predict(xgb.DMatrix(test[cols]), ntree_limit=model.best_ntree_limit)
 #xgb_pred = model.predict(xgb.DMatrix(test[cols]), ntree_limit=ntree_limit[i])
 # xgb_valid = model.predict(xgb.DMatrix(x2))

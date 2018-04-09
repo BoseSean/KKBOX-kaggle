@@ -14,4 +14,4 @@ df_trans['is_discount'] = df_trans.discount.apply(lambda x: 1 if x > 0 else 0)
 for m in df_trans.columns:
     df_trans[m].fillna(method='ffill', inplace=True)
 
-df_trans.to_csv('transac_given_processed.csv')
+df_trans.to_csv(data_root+'transac_given_processed.csv')
