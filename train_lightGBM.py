@@ -17,33 +17,27 @@ print('Loading data ...')
 data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 train = pd.read_csv( data_root+'train.csv')
 members  = pd.read_csv(data_root+'members_v3.csv')
-members.drop_duplicates(subset=['msno'], keep='first', inplace=True)
-
 num_mean = pd.read_csv(data_root+'num_mean.csv')
-num_mean = num_mean.append(pd.read_csv(data_root+'num_mean_2.csv'))
-num_mean.drop_duplicates(subset=['msno'], keep='first', inplace=True)
-
 transaction = pd.read_csv(data_root+'transac_processed.csv')
 transaction.drop('idx',1)
 transaction_given = pd.read_csv(data_root+'transac_given_processed.csv')
-# test = pd.read_csv(data_root+'sample_submission_zero.csv')
 
 
-# for c, dtype in zip(info.columns, info.dtypes):
-#     if dtype == np.float64:
-#         info[c] = info[c].astype(np.float32)
 print('Merging data ...')
-df_train = train.merge(members, how='left', on='msno')
-df_train = df_train.merge(num_mean, how='left', on='msno')
-df_train = df_train.merge(transaction, how='left', on='msno')
-df_train = df_train.merge(transaction_given, how='left', on='msno')
+
+df_train = train.merge(members, how='left', on='msno', copy=False)
+df_train = df_train.merge(num_mean, how='left', on='msno', copy=False)
+df_train = df_train.merge(transaction, how='left', on='msno', copy=False)
+df_train = df_train.merge(transaction_given, how='left', on='msno', copy=False)
+
+del transaction, transaction_given, members, num_mean
+gc.collect()
+
+# Drop duplicates first
+#df_test = df_test.drop_duplicates('msno')
 
 print('Converting data type ...')
-df_train["is_churn"] = df_train["is_churn"].astype('category')
-df_train["city"] = df_train["city"].astype('category')
-df_train["gender"] = df_train["gender"].astype('category')
-df_train["registered_via"] = df_train["registered_via"].astype('category')
-df_train["registration_init_time"] = df_train["registration_init_time"].astype('category')
+
 
 df_train['city'].fillna(method='ffill', inplace=True)
 df_train['bd'].fillna(method='ffill', inplace=True)
@@ -51,44 +45,38 @@ df_train['gender'].fillna(method='ffill', inplace=True)
 df_train['registered_via'].fillna(method='ffill', inplace=True)
 df_train["registration_init_time"].fillna(method='ffill', inplace=True)
 
-df_train['total_list_price'] = df_train['total_list_price'].astype(np.int16)
-df_train['transaction_span'] = df_train['transaction_span'].astype(np.int16)
-df_train['is_auto_renew'] = df_train['is_auto_renew'].astype('category')
-df_train['is_cancel_sum'] = df_train['is_cancel_sum'].astype('category')
-df_train['trans_count'] = df_train['trans_count'].astype(np.int16)
-df_train['total_amount_paid'] = df_train['total_amount_paid'].astype(np.int16)
-df_train['difference_in_price_paid'] = df_train['difference_in_price_paid'].astype(np.int16)
-df_train['amount_paid_perday'] = df_train['amount_paid_perday'].astype(np.float32)
+
+gender = {'male':1, 'female':2}
+df_train['gender'] = df_train['gender'].map(gender)
+df_train["is_churn"] = df_train["is_churn"].astype(np.int8,copy=False)
+df_train["city"] = df_train["city"].astype(np.int8,copy=False)
+df_train["registered_via"] = df_train["registered_via"].astype(np.int8,copy=False)
+df_train["registration_init_time"] = df_train["registration_init_time"].astype(np.int8,copy=False)
 
 
-df_train['avg(num_25)']  = df_train['avg(num_25)'].astype(np.float32)
-df_train['avg(num_50)']  = df_train['avg(num_50)'].astype(np.float32)
-df_train['avg(num_75)']  = df_train['avg(num_75)'].astype(np.float32)
-df_train['avg(num_985)']  = df_train['avg(num_985)'].astype(np.float32)
-df_train['avg(num_100)']  = df_train['avg(num_100)'].astype(np.float32)
-df_train['avg(num_unq)']  = df_train['avg(num_unq)'].astype(np.float32)
-df_train['avg(total_secs)']  = df_train['avg(total_secs)'].astype(np.float32)
-df_train['sum(num_25)']  = df_train['sum(num_25)'].astype(np.float32)
-df_train['sum(num_50)']  = df_train['sum(num_50)'].astype(np.float32)
-df_train['sum(num_75)']  = df_train['sum(num_75)'].astype(np.float32)
-df_train['sum(num_985)']  = df_train['sum(num_985)'].astype(np.float32)
-df_train['sum(num_100)']  = df_train['sum(num_100)'].astype(np.float32)
-df_train['sum(num_unq)']  = df_train['sum(num_unq)'].astype(np.float32)
-df_train['sum(total_secs)']  = df_train['sum(total_secs)'].astype(np.float32)
-df_train['payment_method_id'] = df_train['payment_method_id'].astype(np.int16)
-df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16)
-df_train['plan_list_price'] = df_train['plan_list_price'].astype(np.int16)
-df_train['actual_amount_paid'] = df_train['actual_amount_paid'].astype(np.int16)
-df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16)
+df_train['total_list_price'] = df_train['total_list_price'].astype(np.int16,copy=False)
+df_train['transaction_span'] = df_train['transaction_span'].astype(np.int16,copy=False)
+df_train['is_auto_renew'] = df_train['is_auto_renew'].astype(np.int8,copy=False)
+df_train['is_cancel_sum'] = df_train['is_cancel_sum'].astype(np.int8,copy=False)
+df_train['trans_count'] = df_train['trans_count'].astype(np.int16,copy=False)
+df_train['total_amount_paid'] = df_train['total_amount_paid'].astype(np.int16,copy=False)
+df_train['difference_in_price_paid'] = df_train['difference_in_price_paid'].astype(np.int16,copy=False)
+df_train['amount_paid_perday'] = df_train['amount_paid_perday'].astype(np.float32,copy=False)
 
+df_train['payment_method_id'] = df_train['payment_method_id'].astype(np.int16,copy=False)
+df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16,copy=False)
+df_train['plan_list_price'] = df_train['plan_list_price'].astype(np.int16,copy=False)
+df_train['actual_amount_paid'] = df_train['actual_amount_paid'].astype(np.int16,copy=False)
+df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16,copy=False)
+df_train['discount'] = df_train['discount'].astype(np.int16,copy=False)
+df_train['is_discount'] = df_train['is_discount'].astype(np.int16,copy=False)
 
 print(df_train.dtypes)
 # df_train.fillna(-1)
 
-features = [c for c in df_train.columns if c not in ['is_churn','msno']]
+features = [c for c in df_train.columns if c not in ['is_churn','msno','sum(num_25)','sum(num_50)','sum(num_75)','sum(num_985)','sum(num_100)','sum(num_unq)','sum(total_secs)','idx','idx_g']]
 print('Using features')
 print(features)
-
 
 
 print('Split data ...')
@@ -109,8 +97,37 @@ watchlist = [d_train, d_valid]
 #     'metric': 'binary_logloss'
 # }
 
-print('Training ...')
-n_round=500
+# print('Training ...')
+# n_round=500
+# lgb_params = {
+#     'objective': 'binary',
+#     'metric': 'binary_logloss',
+#     'boosting': 'gbdt',
+#     'learning_rate': 0.002,  # small learn rate, large number of iterations
+#     'verbose': 0,
+#     'num_leaves': 108,
+#     'bagging_fraction': 0.95,
+#     'bagging_freq': 1,
+#     'bagging_seed': 1,
+#     'feature_fraction': 0.9,
+#     'feature_fraction_seed': 1,
+#     'max_bin': 128,
+#     'max_depth': 7,
+#     'reg_alpha': 1,
+#     'reg_lambda': 0,
+#     'min_split_gain': 0.5,
+#     'min_child_weight': 1,
+#     'min_child_samples': 10,
+#     'scale_pos_weight': 1,
+#     'verbosity': -1
+# }
+
+
+
+# model1 = lgb.train(lgb_params, train_set=d_train, num_boost_round=2500,
+#     valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100)
+# model1.save_model('lgb_model/lgb_model1.txt')
+
 lgb_params = {
         'learning_rate': 0.05,
         'application': 'binary',
@@ -120,14 +137,10 @@ lgb_params = {
         'metric': 'binary_logloss'
     }
 
-model1 = lgb.train(lgb_params, train_set=d_train, num_boost_round=240,
-    valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100)
-model1.save_model('model1.txt')
-
-model = lgb.cv(lgb_params, train_set=d_train, num_boost_round=240,
-    valid_sets=watchlist, early_stopping_rounds=50, verbose_eval=100,  nfold=5)
+model = lgb.train(lgb_params, train_set=d_train, num_boost_round=500,
+    valid_sets=watchlist, early_stopping_rounds=66, verbose_eval=100)
 
 print('Saving ...')
 
-model.save_model('model.txt')
+model.save_model('lgb_model/lgb_model2.txt')
 # print(df_train)

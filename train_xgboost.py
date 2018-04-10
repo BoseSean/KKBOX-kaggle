@@ -40,13 +40,6 @@ gc.collect()
 
 print('Converting data type ...')
 
-df_train.drop('sum(num_25)',1)
-df_train.drop('sum(num_50)',1)
-df_train.drop('sum(num_75)',1)
-df_train.drop('sum(num_985)',1)
-df_train.drop('sum(num_100)',1)
-df_train.drop('sum(num_unq)',1)
-df_train.drop('sum(total_secs)',1)
 
 df_train['city'].fillna(method='ffill', inplace=True)
 df_train['bd'].fillna(method='ffill', inplace=True)
@@ -83,7 +76,7 @@ df_train['is_discount'] = df_train['is_discount'].astype(np.int16,copy=False)
 print(df_train.dtypes)
 # df_train.fillna(-1)
 
-features = [c for c in df_train.columns if c not in ['is_churn','msno']]
+features = [c for c in df_train.columns if c not in ['is_churn','msno','sum(num_25)','sum(num_50)','sum(num_75)','sum(num_985)','sum(num_100)','sum(num_unq)','sum(total_secs)','idx','idx_g']]
 print('Using features')
 print(features)
 
@@ -168,20 +161,22 @@ print(features)
 # print(features)
 
 
-print('Training ...')
 
 fold = 5
-for i in range(0,fold):
+for i in range(1,fold):
+    print('Training ...')
     params = {
-    'eta': 0.07,
-    'booster':'gbtree',
-    'max_depth': 7,
-    'objective': 'binary:logistic',
-    'eval_metric': 'logloss',
-    'seed': 3227,
-    'silent': True,
-    'tree_method': 'exact'
+        'eta': 0.07,
+        'max_depth': 7,
+        'objective': 'binary:logistic',
+        'eval_metric': 'logloss',
+        'seed': 3228+i,
+        'silent': True,
+        # 'tree_method': 'exact',
+        'predictor’:’gpu_predictor'   
     }
+
+
     # params = {
     # 'base_score': 0.5,
     # 'eta': 0.002,  # use 0.002
@@ -201,14 +196,15 @@ for i in range(0,fold):
     # 'silent': True
     # }
     x1, x2, y1, y2 = model_selection.train_test_split(df_train[features], 
-    df_train['is_churn'], test_size=0.2, random_state=i)
+    df_train['is_churn'], test_size=0.1, random_state=i)
     watchlist = [(xgb.DMatrix(x1, y1), 'train'), (xgb.DMatrix(x2, y2), 'valid')]
     model = xgb.train(params, xgb.DMatrix(x1, y1), 200,  watchlist, 
         maximize=False, verbose_eval=100, early_stopping_rounds=50)
 
     print('Saving ...'+str(i))
     model.save_model('xgb_model/xgb_model_'+str(i)+'.model')
-
+    del model, x1, x2, y1, y2, watchlist
+    gc.collect()
 # print('Predicting ...')
 # prediction = model.predict(df_test[features])
 # prediction_df = pd.DataFrame(OrderedDict([ ("msno", test["msno"]),("is_churn", prediction) ]))

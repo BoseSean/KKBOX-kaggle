@@ -1,7 +1,9 @@
 *.csv
 model.txt
 xgb_model.model
-*/*.model
+*model*
+ldb_model/
+xgb_model/
 model_lightgbm.txt
 
 # General
