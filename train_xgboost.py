@@ -20,6 +20,7 @@ data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 train = pd.read_csv( data_root+'train.csv')
 members  = pd.read_csv(data_root+'members_v3.csv')
 num_mean = pd.read_csv(data_root+'num_mean.csv')
+num_mean = num_mean.append(pd.read_csv(data_root+'num_mean_2.csv'))
 transaction = pd.read_csv(data_root+'transac_processed.csv')
 transaction.drop('idx',1)
 transaction_given = pd.read_csv(data_root+'transac_given_processed.csv')
@@ -73,6 +74,16 @@ df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16,copy=False)
 df_train['discount'] = df_train['discount'].astype(np.int16,copy=False)
 df_train['is_discount'] = df_train['is_discount'].astype(np.int16,copy=False)
 
+
+df_train['avg(num_25)'].fillna(0,inplace = True)
+df_train['avg(num_50)'].fillna(0,inplace = True)
+df_train['avg(num_75)'].fillna(0,inplace = True)
+df_train['avg(num_985)'].fillna(0,inplace = True)
+df_train['avg(num_100)'].fillna(0,inplace = True)
+df_train['avg(num_unq)'].fillna(0,inplace = True)
+df_train['avg(total_secs)'].fillna(0,inplace = True)
+
+
 print(df_train.dtypes)
 # df_train.fillna(-1)
 
@@ -80,87 +91,12 @@ features = [c for c in df_train.columns if c not in ['is_churn','msno','sum(num_
 print('Using features')
 print(features)
 
-# print('Loading data ...')
-
-# #data_root = '/opt/shared-data/kkbox-churn-prediction-challenge/'
-# data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
-# train = pd.read_csv( data_root+'train.csv')
-# train = train.merge(pd.read_csv( data_root+'train_v2.csv'))
-# members  = pd.read_csv(data_root+'members_v3.csv')
-# num_mean = pd.read_csv(data_root+'num_mean.csv')
-# num_mean = num_mean.append(pd.read_csv(data_root+'num_mean_2.csv'))
-
-# transaction = pd.read_csv(data_root+'transac_processed.csv')
-# transaction.drop('idx',1)
-
-# test = pd.read_csv(data_root+'sample_submission_v2.csv')
-# test.drop(['is_churn'],axis=1)
-# # test = pd.read_csv(data_root+'sample_submission_zero.csv')
 
 
-# # for c, dtype in zip(info.columns, info.dtypes):
-# #     if dtype == np.float64:
-# #         info[c] = info[c].astype(np.float32)
-# print('Merging data ...')
-# df_train = train.merge(members, how='left', on='msno')
-# df_train = df_train.merge(num_mean, how='left', on='msno')
-# df_train = df_train.merge(transaction, how='left', on='msno')
+# from imblearn.over_sampling import SMOTE 
 
-# df_test = test.merge(members, how='left', on='msno')
-# df_test = df_test.merge(num_mean, how='left', on='msno')
-# df_test = df_test.merge(transaction, how='left', on='msno')
-# print('Converting data type ...')
-# # df_train["is_churn"] = df_train["is_churn"].astype('category')
-# # df_train["city"] = df_train["city"].astype('category')
-# # df_train["gender"] = df_train["gender"].astype('category')
-# # df_train["registered_via"] = df_train["registered_via"].astype('category')
-# # df_train["registration_init_time"] = df_train["registration_init_time"].astype('category')
-
-
-# # df_train['city'].fillna(method='ffill', inplace=True)
-# # df_train['bd'].fillna(method='ffill', inplace=True)
-# # df_train['gender'].fillna(method='ffill', inplace=True)
-# # df_train['registered_via'].fillna(method='ffill', inplace=True)
-# # df_train["registration_init_time"].fillna(method='ffill', inplace=True)
-# gender = {'male':1, 'female':2}
-# df_train['gender'] = members['gender'].map(gender)
-# df_train['total_list_price'] = df_train['total_list_price'].astype(np.int16)
-# df_train['transaction_span'] = df_train['transaction_span'].astype(np.int16)
-# df_train['is_auto_renew'] = df_train['is_auto_renew'].astype(np.int16)
-# df_train['is_cancel_sum'] = df_train['is_cancel_sum'].astype(np.int16)
-# df_train['trans_count'] = df_train['trans_count'].astype(np.int16)
-# df_train['total_amount_paid'] = df_train['total_amount_paid'].astype(np.int16)
-# df_train['difference_in_price_paid'] = df_train['difference_in_price_paid'].astype(np.int16)
-# df_train['amount_paid_perday'] = df_train['amount_paid_perday'].astype(np.float32)
-
-# df_train.corr()
-# # df_train['payment_method_id'] = df_train['payment_method_id'].astype(np.int16)
-# # df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16)
-# # df_train['plan_list_price'] = df_train['plan_list_price'].astype(np.int16)
-# # df_train['actual_amount_paid'] = df_train['actual_amount_paid'].astype(np.int16)
-# # df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16)
-# # df_train['discount'] = df_train['discount'].astype(np.int16)
-# # df_train['is_discount'] = df_train['is_discount'].astype('category')
-
-# print(df_train.dtypes)
-
-# df_test['gender'] = members['gender'].map(gender)
-# df_test['total_list_price'] = df_test['total_list_price'].astype(np.int16)
-# df_test['transaction_span'] = df_test['transaction_span'].astype(np.int16)
-# df_test['is_auto_renew'] = df_test['is_auto_renew'].astype(np.int16)
-# df_test['is_cancel_sum'] = df_test['is_cancel_sum'].astype(np.int16)
-# df_test['trans_count'] = df_test['trans_count'].astype(np.int16)
-# df_test['total_amount_paid'] = df_test['total_amount_paid'].astype(np.int16)
-# df_test['difference_in_price_paid'] = df_test['difference_in_price_paid'].astype(np.int16)
-# df_test['amount_paid_perday'] = df_test['amount_paid_perday'].astype(np.float32)
-# print(df_test.dtypes)
-# # df_train.fillna(-1)
-
-# features = [c for c in df_train.columns if c not in ['is_churn','msno']]
-# print('Using features')
-# print(features)
-
-
+# sm = SMOTE(random_state=42)
+# X_res, y_res = sm.fit_sample(df_train[features], df_train['is_churn'])
 
 fold = 5
 for i in range(1,fold):

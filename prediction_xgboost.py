@@ -50,41 +50,51 @@ gc.collect()
 print('Converting data type ...')
 
 
-df_test['city'].fillna(method='ffill', inplace=True)
-df_test['bd'].fillna(method='ffill', inplace=True)
-df_test['gender'].fillna(method='ffill', inplace=True)
-df_test['registered_via'].fillna(method='ffill', inplace=True)
-df_test["registration_init_time"].fillna(method='ffill', inplace=True)
+df_train['city'].fillna(method='ffill', inplace=True)
+df_train['bd'].fillna(method='ffill', inplace=True)
+df_train['gender'].fillna(method='ffill', inplace=True)
+df_train['registered_via'].fillna(method='ffill', inplace=True)
+df_train["registration_init_time"].fillna(method='ffill', inplace=True)
 
 
 gender = {'male':1, 'female':2}
-df_test['gender'] = df_test['gender'].map(gender)
-df_test["is_churn"] = df_test["is_churn"].astype(np.int8,copy=False)
-df_test["city"] = df_test["city"].astype(np.int8,copy=False)
-df_test["registered_via"] = df_test["registered_via"].astype(np.int8,copy=False)
-df_test["registration_init_time"] = df_test["registration_init_time"].astype(np.int8,copy=False)
+df_train['gender'] = df_train['gender'].map(gender)
+df_train["is_churn"] = df_train["is_churn"].astype(np.int8,copy=False)
+df_train["city"] = df_train["city"].astype(np.int8,copy=False)
+df_train["registered_via"] = df_train["registered_via"].astype(np.int8,copy=False)
+df_train["registration_init_time"] = df_train["registration_init_time"].astype(np.int8,copy=False)
 
 
-df_test['total_list_price'] = df_test['total_list_price'].astype(np.int16,copy=False)
-df_test['transaction_span'] = df_test['transaction_span'].astype(np.int16,copy=False)
-df_test['is_auto_renew'] = df_test['is_auto_renew'].astype(np.int8,copy=False)
-df_test['is_cancel_sum'] = df_test['is_cancel_sum'].astype(np.int8,copy=False)
-df_test['trans_count'] = df_test['trans_count'].astype(np.int16,copy=False)
-df_test['total_amount_paid'] = df_test['total_amount_paid'].astype(np.int16,copy=False)
-df_test['difference_in_price_paid'] = df_test['difference_in_price_paid'].astype(np.int16,copy=False)
-df_test['amount_paid_perday'] = df_test['amount_paid_perday'].astype(np.float32,copy=False)
+df_train['total_list_price'] = df_train['total_list_price'].astype(np.int16,copy=False)
+df_train['transaction_span'] = df_train['transaction_span'].astype(np.int16,copy=False)
+df_train['is_auto_renew'] = df_train['is_auto_renew'].astype(np.int8,copy=False)
+df_train['is_cancel_sum'] = df_train['is_cancel_sum'].astype(np.int8,copy=False)
+df_train['trans_count'] = df_train['trans_count'].astype(np.int16,copy=False)
+df_train['total_amount_paid'] = df_train['total_amount_paid'].astype(np.int16,copy=False)
+df_train['difference_in_price_paid'] = df_train['difference_in_price_paid'].astype(np.int16,copy=False)
+df_train['amount_paid_perday'] = df_train['amount_paid_perday'].astype(np.float32,copy=False)
 
-df_test['payment_method_id'] = df_test['payment_method_id'].astype(np.int16,copy=False)
-df_test['payment_plan_days'] = df_test['payment_plan_days'].astype(np.int16,copy=False)
-df_test['plan_list_price'] = df_test['plan_list_price'].astype(np.int16,copy=False)
-df_test['actual_amount_paid'] = df_test['actual_amount_paid'].astype(np.int16,copy=False)
-df_test['is_cancel'] = df_test['is_cancel'].astype(np.int16,copy=False)
-df_test['discount'] = df_test['discount'].astype(np.int16,copy=False)
-df_test['is_discount'] = df_test['is_discount'].astype(np.int16,copy=False)
+df_train['payment_method_id'] = df_train['payment_method_id'].astype(np.int16,copy=False)
+df_train['payment_plan_days'] = df_train['payment_plan_days'].astype(np.int16,copy=False)
+df_train['plan_list_price'] = df_train['plan_list_price'].astype(np.int16,copy=False)
+df_train['actual_amount_paid'] = df_train['actual_amount_paid'].astype(np.int16,copy=False)
+df_train['is_cancel'] = df_train['is_cancel'].astype(np.int16,copy=False)
+df_train['discount'] = df_train['discount'].astype(np.int16,copy=False)
+df_train['is_discount'] = df_train['is_discount'].astype(np.int16,copy=False)
+
+
+df_train['avg(num_25)'].fillna(0,inplace = True)
+df_train['avg(num_50)'].fillna(0,inplace = True)
+df_train['avg(num_75)'].fillna(0,inplace = True)
+df_train['avg(num_985)'].fillna(0,inplace = True)
+df_train['avg(num_100)'].fillna(0,inplace = True)
+df_train['avg(num_unq)'].fillna(0,inplace = True)
+df_train['avg(total_secs)'].fillna(0,inplace = True)
+
 
 print(df_test.dtypes)
 # df_test.fillna(-1)
-features = [c for c in df_test.columns if c not in ['is_churn','msno','sum(num_25)','sum(num_50)','sum(num_75)','sum(num_985)','sum(num_100)','sum(num_unq)','sum(total_secs)','idx','idx_g']]
+features = [c for c in df_train.columns if c not in ['is_churn','msno','sum(num_25)','sum(num_50)','sum(num_75)','sum(num_985)','sum(num_100)','sum(num_unq)','sum(total_secs)','idx','idx_g']]
 
 print("predicting...")
 prediction = 0
@@ -104,6 +114,4 @@ test['is_churn'] = prediction.clip(0.0000001, 0.999999)
 test[['msno', 'is_churn']].to_csv("xgboost_prediction_3.csv", index=False)
 # # prediction_df = pd.DataFrame(OrderedDict([ ("msno", test["msno"]),("is_churn", prediction) ]))
 # # prediction_df.to_csv("xgboost_prediction.csv",index=False)
-907472
-1585762
 

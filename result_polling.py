@@ -23,6 +23,6 @@ for f_name,p in files:
 file['is_churn'] = final_result.clip(0.0000001, 0.999999)
 file[['msno', 'is_churn']].to_csv("combine_submission.csv", index=False)
 
-for i in [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
-    a = f[(f['is_churn']>i) & (f['is_churn']<=i+0.1)]
-    print(a.size)
+# for i in [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
+#     a = f[(f['is_churn']>i) & (f['is_churn']<=i+0.1)]
+#     print(i,a.size)
