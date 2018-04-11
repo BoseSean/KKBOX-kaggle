@@ -1,4 +1,11 @@
-model.txt 
+*.csv
+model.txt
+xgb_model.model
+*model*
+ldb_model/
+xgb_model/
+model_lightgbm.txt
+
 # General
 .DS_Store
 .AppleDouble

@@ -9,30 +9,38 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import xgboost as xgb
 import gc
 from sklearn import *
+from collections import OrderedDict
 
+print("loading...")
 
-gc.enable()
-
-print('Loading data ...')
-
-#data_root = '/opt/shared-data/kkbox-churn-prediction-challenge/'
 data_root = '~/churn-prediction/kkbox-churn-prediction-challenge/'
 train = pd.read_csv( data_root+'train.csv')
 members  = pd.read_csv(data_root+'members_v3.csv')
+members.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+
 num_mean = pd.read_csv(data_root+'num_mean.csv')
 num_mean = num_mean.append(pd.read_csv(data_root+'num_mean_2.csv'))
+num_mean.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+
 transaction = pd.read_csv(data_root+'transac_processed.csv')
 transaction.drop('idx',1)
-transaction_given = pd.read_csv(data_root+'transac_given_processed.csv')
+transaction.drop_duplicates(subset=['msno'], keep='first', inplace=True)
 
+transaction_given = pd.read_csv(data_root+'transac_given_processed.csv')
+transaction_given.drop_duplicates(subset=['msno'], keep='first', inplace=True)
+
+test = pd.read_csv(data_root+'sample_submission_v2.csv')
+test.drop(['is_churn'],axis=1)
+print(test.shape)
 
 print('Merging data ...')
 
-df_train = train.merge(members, how='left', on='msno', copy=False)
-df_train = df_train.merge(num_mean, how='left', on='msno', copy=False)
-df_train = df_train.merge(transaction, how='left', on='msno', copy=False)
-df_train = df_train.merge(transaction_given, how='left', on='msno', copy=False)
+df_test = test.merge(members, how='left', on='msno', copy=False)
+df_test = df_test.merge(num_mean, how='left', on='msno', copy=False)
+df_test = df_test.merge(transaction, how='left', on='msno', copy=False)
+df_test = df_test.merge(transaction_given, how='left', on='msno', copy=False)
 
+print(df_test)
 del transaction, transaction_given, members, num_mean
 gc.collect()
 
@@ -84,70 +92,26 @@ df_train['avg(num_unq)'].fillna(0,inplace = True)
 df_train['avg(total_secs)'].fillna(0,inplace = True)
 
 
-print(df_train.dtypes)
-# df_train.fillna(-1)
-
+print(df_test.dtypes)
+# df_test.fillna(-1)
 features = [c for c in df_train.columns if c not in ['is_churn','msno','sum(num_25)','sum(num_50)','sum(num_75)','sum(num_985)','sum(num_100)','sum(num_unq)','sum(total_secs)','idx','idx_g']]
-print('Using features')
-print(features)
 
-
-
-# from imblearn.over_sampling import SMOTE 
-
-# sm = SMOTE(random_state=42)
-# X_res, y_res = sm.fit_sample(df_train[features], df_train['is_churn'])
-
-fold = 5
+print("predicting...")
+prediction = 0
+fold = 4
 for i in range(1,fold):
-    print('Training ...')
-    params = {
-        'eta': 0.07,
-        'max_depth': 7,
-        'objective': 'binary:logistic',
-        'eval_metric': 'logloss',
-        'seed': 3228+i,
-        'silent': True,
-        # 'tree_method': 'exact',
-        'predictor’:’gpu_predictor'   
-    }
+    model = xgb.Booster()
+    model.load_model('xgb_model/xgb_model_'+str(i)+'.model')
+    if i==0:
+        prediction = model.predict(xgb.DMatrix(df_test[features]))
+    else:
+        prediction += model.predict(xgb.DMatrix(df_test[features]))
+    print(prediction.shape)
 
+prediction /= fold
 
-    # params = {
-    # 'base_score': 0.5,
-    # 'eta': 0.002,  # use 0.002
-    # 'max_depth': 6,
-    # 'booster': 'gbtree',
-    # 'colsample_bylevel': 1,
-    # 'colsample_bytree': 1.0,
-    # 'gamma': 1,
-    # 'max_child_weight': 5,
-    # 'n_estimators': 600,
-    # 'reg_alpha': '0',
-    # 'reg_lambda': '1',
-    # 'scale_pos_weight': 1,
-    # 'objective': 'binary:logistic',
-    # 'eval_metric': 'logloss',
-    # 'seed': 2017+i,
-    # 'silent': True
-    # }
-    x1, x2, y1, y2 = model_selection.train_test_split(df_train[features], 
-    df_train['is_churn'], test_size=0.1, random_state=i)
-    watchlist = [(xgb.DMatrix(x1, y1), 'train'), (xgb.DMatrix(x2, y2), 'valid')]
-    model = xgb.train(params, xgb.DMatrix(x1, y1), 200,  watchlist, 
-        maximize=False, verbose_eval=100, early_stopping_rounds=50)
+test['is_churn'] = prediction.clip(0.0000001, 0.999999)
+test[['msno', 'is_churn']].to_csv("xgboost_prediction_3.csv", index=False)
+# # prediction_df = pd.DataFrame(OrderedDict([ ("msno", test["msno"]),("is_churn", prediction) ]))
+# # prediction_df.to_csv("xgboost_prediction.csv",index=False)
 
-    print('Saving ...'+str(i))
-    model.save_model('xgb_model/xgb_model_'+str(i)+'.model')
-    del model, x1, x2, y1, y2, watchlist
-    gc.collect()
-# print('Predicting ...')
-# prediction = model.predict(df_test[features])
-# prediction_df = pd.DataFrame(OrderedDict([ ("msno", test["msno"]),("is_churn", prediction) ]))
-# prediction_df.to_csv("xgboost_prediction.csv",index=False)
-
-# xgb_pred = model.predict(xgb.DMatrix(test[cols]), ntree_limit=model.best_ntree_limit)
-#xgb_pred = model.predict(xgb.DMatrix(test[cols]), ntree_limit=ntree_limit[i])
-# xgb_valid = model.predict(xgb.DMatrix(x2))
-# print('xgb valid log loss = {}'.format(log_loss(y2,xgb_valid)))
-# print(df_train)
