@@ -3,8 +3,9 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
 
 files = [
-('xgboost_prediction_3.csv', 0.13890*100),
-('ligthgbm_prediction_1.csv', 0.17568*100)
+('xgboost_prediction_3.csv',  0.73*100),
+('catboost_prediction_1.csv', 0.18*100),
+('ligthgbm_prediction_1.csv', 0.09*100)
 ]
 
 cnt = 0
